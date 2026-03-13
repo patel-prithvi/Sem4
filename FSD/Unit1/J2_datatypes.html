@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        // var a={
+        //     name: "Misha", //string
+        //     age: 21, //number
+        //     branch: {b1: "CST", b2: "CS&IT"}, //obj
+        //     marks: [21,22,25], //array
+        //     ispresent: true, // boolean
+        //     city: null //null
+        // }
+        // console.log(a.name);
+        // console.log(a['age']);
+        // console.log(a.branch);
+        // console.log(a.branch.b1);
+        // console.log(a['branch']['b2']);
+        // console.log(a.marks[2]);
+        // console.log(a.ispresent);
+        // console.log(a.city);
+
+        var person={
+            name: "Rahul", 
+            age: 22, 
+            city: "surat", 
+            skills: ["HTML", "CSS", "JS"], 
+            address: {state: "Gujarat", country: "India"} 
+        }
+        console.log(person.name);
+        console.log(person.age);
+        console.log(person.skills[0]);
+        console.log(person.address.state);
+        
+    </script>
+</head>
+</html>
+<!-- 
+allowed: string, number, object, array, boolean, null
+not allowed: function, date, undefined
+accessing ways:
+obj.key
+obj['key']
+obj.key.key
+obj.array[index]
+-->

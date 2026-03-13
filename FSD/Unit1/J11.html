@@ -1,0 +1,19 @@
+<!-- 
+write a json object which contains array of 3 objects each obj contains 2 properties name and age now sort objs 
+by age in dec order print name and age as dec order
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        let det= {'arr':[
+            {'name': 'a', 'age': 30},
+            {'name': 'b', 'age': 20},
+            {'name': 'c', 'age': 80}
+        ]}
+        
+        det.arr.sort((a, b) => b.age - a.age);
+        console.log(det);
+    </script>
+</head>
+</html>

@@ -1,0 +1,25 @@
+<!-- 
+consider below json object and fench values values using for loop(for in and for of)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        const sub={"FSD":[{"Topic":"HTML", "Course":"Beginer", "Content":["tags", "table", "form"]},
+        {"Topic":"CSS", "Course":"Beginer", "Content":["style", "color"]}
+        ]}
+        for(x in sub.FSD){
+            for(y in sub.FSD[x]){
+                document.write(sub.FSD[x][y]+"<br>")
+            }
+            document.write("<br>")
+        }
+        for(x of sub.FSD){
+            document.write(x.Topic+"<br>")
+            document.write(x.Course+"<br>")
+            document.write(x.Content+"<br>")
+            document.write("<br>")
+        }
+    </script>
+</head>
+</html>
