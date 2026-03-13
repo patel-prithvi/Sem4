@@ -1,0 +1,13 @@
+<!-- 
+intialize 2 variable and increment both var each time and display the addition of the variable at interval of 1s 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <p id="id"></p>
+    <script>
+        let a=2, b=5;
+        setInterval(() => {++a; ++b; document.getElementById("id").innerHTML=(a+b)},1000)
+    </script>
+</body>
+</html>

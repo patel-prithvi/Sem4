@@ -1,0 +1,26 @@
+<!-- 
+write code to increse font size at interval of 50 ms and it should stop incresing when font size rich to 50px this task should be perform 
+when while clicking on the increase button default font size 15px 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <p id="p1">Hello</p>
+    <button onclick="fun1()">increse</button>
+    <script>
+        font ="15";
+        function fun(font){
+            p1.style.fontSize= font+ 'px';
+        }
+        function fun1(){
+            setInterval(
+                function(){
+                    if(font<=50){
+                        fun(font++)
+                    }
+                },50
+            );
+        }
+    </script>
+</body>
+</html>
