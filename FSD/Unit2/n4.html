@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <p id="p1">Hello</p>
+    <button onclick="fun1()">increse</button>
+    <button onclick="fun2()">Decrease</button>
+    <button onclick="fun3()">Stop</button>
+    <script>
+        font ="50";
+        function fun(font){
+            p1.style.fontSize= font+ 'px';
+        }
+        function fun1(){
+            test= setInterval(
+                function(){
+                    if(font<200){
+                        fun(font++)
+                    }
+                },100
+            );
+        }
+        function fun2(){
+            test= setInterval(
+                function(){
+                    if(font>=20){
+                        fun(--font)
+                    }
+                },100
+            );
+        }
+
+        function fun3(){
+            clearInterval(test)
+        }
+    </script>
+</body>
+</html>

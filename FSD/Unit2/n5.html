@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        function main(cb){
+            console.log("operation 1")
+            setTimeout(function(){
+                cb("operation complete"),2000
+            })
+            console.log("operation 2")
+        }
+        function call_back(result){
+            console.log("Result: "+result);
+        }
+        main(call_back)
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
