@@ -7,23 +7,19 @@ app.get('/home',(req,res)=>{
     res.send(`<h1>Student Form</h1>
         <form action='/calculate' method='post'>
         name: <input type='text' name='n1'/>
-        FSD: <input type='text' name='n2'/>
-        Python: <input type='text' name='n3'/>
-        DM: <input type='text' name='n4'/>
+        FSD: <input type='number' name='n2'/>
+        Python: <input type='number' name='n3'/>
+        DM: <input type='number' name='n4'/>
         <button type='submit'>Calculate</button>
         </form>`);
 })
 app.post('/calculate',(req,res)=>{
-    a=req.body.n1;
-    b=req.body.n2;
-    c=req.body.n3;
-    d=req.body.n4;
-    avg=parseInt((a+b+c+d)/4)
-    res.write(a)
-    res.write("FSD:"+b)
-    res.write("Python:"+c)
-    res.write("DM:"+d)
-    res.write("avg:"+avg)
+    a=req.body.n1
+    m1=parseInt(req.body.n2)
+    m2=parseInt(req.body.n3)
+    m3=parseInt(req.body.n4)
+    avg=(m1+m2+m3)/3
+    res.send(a+" = "+avg)
 })
 app.listen(6061,()=>{
     console.log('Running')
