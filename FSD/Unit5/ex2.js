@@ -2,7 +2,7 @@
 // and a submit button 
 express = require("express")
 app = express()
-app.use(express.static(__dirname,{index:'2.html'}))
+app.use(express.static(__dirname,{index:'ex2.html'}))
 app.get('/mes', function(req,res){
     res.set("content-type","text/html");
     m=req.query.mes
