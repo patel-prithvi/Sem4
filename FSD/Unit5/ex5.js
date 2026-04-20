@@ -2,7 +2,7 @@
 // to login page if user name is admin display welcome admin else show please login with admin name and a link back to the form  
 express = require('express');
 app = express();
-app.use(express.static(__dirname,{index:'4.html'}))
+app.use(express.static(__dirname,{index:'ex5.html'}))
 app.use(express.urlencoded({ extended: true }));
 
 app.post('/login', (req, res) => {
