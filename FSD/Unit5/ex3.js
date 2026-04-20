@@ -7,7 +7,7 @@
 
 express = require("express")
 app = express()
-app.use(express.static(__dirname,{index:'3.html'}))
+app.use(express.static(__dirname,{index:'ex3.html'}))
 app.get('/calc', function(req,res){
     n1 = parseInt(req.query.num1)
     n2 = parseInt(req.query.num2)
