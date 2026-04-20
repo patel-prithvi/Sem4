@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <h2>User Feedback Form</h2>
+    <form action="/submit" method="POST">
+        Name: <input type="text" name="name" required><br><br>
+        Email: <input type="email" name="email" required><br><br>
+        Message: <textarea name="message" required></textarea><br><br>
+        
+        Rating:<br>
+        <input type="radio" name="rating" value="Bad" required> Bad
+        <input type="radio" name="rating" value="Average"> Average
+        <input type="radio" name="rating" value="Good"> Good
+        <input type="radio" name="rating" value="Very Good"> Very Good
+        <input type="radio" name="rating" value="Excellent"> Excellent
+        <br><br>
+        
+        <input type="submit">
+    </form>
+</body>
+</html>
