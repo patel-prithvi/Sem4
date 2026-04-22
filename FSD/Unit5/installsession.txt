@@ -1,0 +1,4 @@
+in command prompt in vs code
+in express folder in not in that then cd express
+then
+npm install express-session
