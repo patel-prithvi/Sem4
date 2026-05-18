@@ -1,0 +1,8 @@
+node -v 
+it should be above 20 version
+npm -v
+npm create vite@latest
+project name : myapp
+framework: React
+variant: Javascript
+vite asks to start: yes
