@@ -1,0 +1,25 @@
+Chapter-7
+- DOM
+- Map
+- Filter
+- Event - onClick, onDoubleclick, onSubmit, onChange
+- Props
+- Routing
+
+Chapter-8
+- Hooks
+1. useState
+2. useContext(createContext)
+3. useReducer
+4. useEffect
+- Axios - not possible ask but in mcq possible
+
+  ch7        
+10 marks  
+mcq- 5marks
+dec- 5marks - 1 Que -  Props, Routing
+
+  ch8        
+15 marks  
+mcq- 5marks
+dec- 10marks - 2 Que 
