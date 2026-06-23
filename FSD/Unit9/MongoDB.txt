@@ -1,0 +1,70 @@
+-open source 
+-no sql database
+
+MongoDB -> BSON
+
+
+RDBMS -> MongoDB
+Database -> Database
+Table -> Collection
+Row -> Document
+Column -> field
+
+Installtion:
+step1:
+1. https://www.mongodb.com/
+2. products
+3. community edition
+4. download community
+5. download mongodb community server
+version - 8.3.4
+platform - windows x64
+package - msi
+https://www.mongodb.com/try/download/community
+
+step2:
+https://www.mongodb.com/try/download/shell
+version - 2.8.3
+platform - windows x64
+package - zip
+
+from extract zip copy exe and dll files and paste in c:/Program Files/MongoDB/Server/6.0/bin
+
+
+mongod --version
+mongosh
+show dbs
+db
+show collections
+use mydb
+db
+db.createCollection("student")
+show collections
+db.faculty.drop()
+db.dropDatabase()
+db.student.renameCollection("students")
+db.students.insertOne({name:'xyz',rollno:23})
+db.students.insertMany([{name:"N1", age:20, status:"Active"}, {name: "N2", age:24}, {name:'N3', age:27, status:'Active', city:'Ahmedabad'}])
+db.students.find({name:'N1'})
+db.students.find({},{status:1})
+db.students.find({},{name:0})
+db.students.find({name:'N1'},{_id:0,age:false})
+db.students.findOne()
+db.students.findOne({name:'N1'})
+db.students.find().limit(3)
+db.students.find().limit(1).skip(1)
+db.students.find().limit(2).skip(2)
+db.students.updateOne({name:'N1'}, {$set:{name:'N4'}})
+db.students.updateOne({age:45}, {$set:{name:'PQR'}},{upsert:true})
+db.students.deleteOne({name:'N4'})
+db.students.count({name:'N4'})
+db.students.find({name:'N4'}).count()
+db.students.countDocuments({name:'N4'})
+db.students.find().sort({age:1})
+
+create a collection named employee having fields name,age,years of exp,and ratings. Insert 5 to 10 random documents in collection
+1.find name of all employees having age>25
+2.increase the years of experience for all the experience by 1
+3.arrange all the records in descending order of age
+4.show the name of emp who is the oldest employee among all the emp(display only name)
+5.delete the record of the employee if the years of exp is 5
