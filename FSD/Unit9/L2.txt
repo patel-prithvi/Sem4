@@ -1,0 +1,68 @@
+db.people.insertMany([{name:'X', age:20, branch:'IT'}, {name:'Y', age:25, branch:'CE'}, {name:'Z', age:18, branch:'CSE'}, 
+{name:'P', age:28, branch:'CS&IT'}, {name:'Q', age:10, branch:'AIML'}, {name:'R', age:5, branch:'AIDS'}])
+Comparison Operators
+1. $eq - db.people.find({age:{$eq:20}}) - equal
+2. $gt - db.people.find({age:{$gt:20}}) - greater than
+3. $lt - db.people.find({age:{$lt:20}}) - less than
+4. $gte - db.people.find({age:{$gte:20}})
+5. $lte - db.people.find({age:{$lte:20}})
+6. $ne - db.people.find({age:{$ne:20}})
+7. $in - db.people.find({age:{$in:[25,50]}})
+8. $nin - db.people.find({age:{$nin:[25,50]}})
+
+update only one document with branch RAI and age 21 where age is <10
+db.people.updateOne(
+  { age: { $lt: 10 }},
+  { $set: { branch: "RAI", age: 21 } }
+)
+
+display all documents where age is greater than 18 and less than 25
+db.people.find({  age: { $gt: 18, $lt: 25 }})
+
+display all documents where people are not aged 18 and 21
+db.people.find({ age: { $nin: [18, 21] } })
+
+
+db.people.insertMany([{name:'N1', age:28, grade:'A'}, {name:'N2', age:22, grade:'B'}, 
+{name:'N3', age:28, grade:'C'}, {name:'N4', age:25, branch:'D'}, {name:'N5', age:18, grade:'A'}])
+Logical Operators
+1. $and 
+db.participant.find({$and:[{name:"N1"},{age:28}]})
+2. $or
+db.participant.find({$or:[{name:"N1"},{age:28}]})
+3. $not
+db.participant.find({age:{$not:{$lt:20}}})
+db.participant.find({age:{$not:{$eq:18}}})
+db.participant.find({grade:{$not:{$in:["A","B"]}}})
+4. $nor
+db.participant.find({$nor:[{name:"N1"},{age:18}]})
+
+
+db.Table1.insertMany([{name:'x', std:1}, {name:'y', std:2}, {name:'z', std:3}, {name:'w', std:4}])
+field update Operators
+1. $inc
+db.Table1.updateMany({},{$inc:{std:1}})
+db.Table1.updateOne({},{$inc:{std:3}})
+db.Table1.updateOne({},{$inc:{std:-2}})
+2. $mul
+db.Table1.updateOne({},{$mul:{std:2}})
+db.Table1.updateOne({name:'x'},{$mul:{std:3}})
+db.Table1.updateOne({name:'x'},{$mul:{std:1.1}})
+db.Table1.updateOne({name:'x'},{$mul:{std:0.8}})
+3. $rename
+db.Table1.updateMany(  {},   { $rename: { "name": "uname" } })
+4. $set
+5. $unset
+db.Table1.updateOne({std:{$eq:4}},{$unset:{uname:" "}})
+
+
+[
+  { _id: ObjectId("6a3b60a8257ff5eb07d56f45"), name: 'sss', age: 22 },
+  { _id: ObjectId("6a3b60a8257ff5eb07d56f46"), name: 'yyy', age: 2 },
+  { _id: ObjectId("6a3b60a8257ff5eb07d56f47"), name: 'ppp', age: 32 }
+]
+1 update name jjj and age 40 where age 20 occurs
+insert new document , if record is not found.
+db.Table1.updateOne(  { age: 20 },  { $set: { name: "jjj", age: 40 } },  { upsert: true })
+2. retrive age and name of documents having names yyy and sss don't project _id field
+db.Table1.find(  { name: { $in: ["yyy", "sss"] } },  { name: 1, age: 1, _id: 0 })
