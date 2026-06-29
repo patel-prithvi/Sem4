@@ -1,0 +1,35 @@
+db.createCollection("studentdata")
+Aggregation:
+1.$match
+db.studentdata.aggregate([{$match:{city:'Surat'}}])
+2.$group (count students city wise)
+db.studentdata.aggregate([{$group:{_id:'$city',totalstudents:{$sum:1}}}])
+db.studentdata.aggregate([{$group:{_id:'$city',avgmarks:{$avg:'$marks'}}}])
+3.$sort
+db.studentdata.aggregate([{$sort:{marks:1}}])
+db.studentdata.aggregate([{$sort:{marks:-1}}])
+4.$project
+db.studentdata.aggregate([{$project:{name:1,_id:0}}])
+db.studentdata.aggregate([{$project:{studentname:'$name',score:'$marks',_id:0}}])
+
+
+complete pipeline example using Aggregation Framework
+1. group students based on their city
+2. claculate avg marks of students of students in each city
+3. sort the result in desc order of avg marks
+4. display only the city name and avg marks
+db.studentdata.aggregate([{$group:{_id:'$city',Averagemarks:{$avg:'$marks'}}},{$sort:{Averagemarks:-1}},
+{$project:{city:'$_id',Averagemarks:'$Averagemarks',_id:0}}])
+
+
+customers collection
+Find customers who spends more that 50k rupees
+db.customers.aggregate([{$match:{totalSpent:{$gt:50000}}}]
+count customers in each membership
+db.customers.aggregate([{$group:{_id:'$membership',totalcustomers:{$sum:1}}}])
+total spending by state
+db.customers.aggregate([{$group:{_id:'$state',totalspent:{$sum:'$totalSpent'}}}])
+sort customers by totalspending
+db.customers.aggregate([{$sort:{totalSpent:1}}])
+display gold members name,city,totalspent
+db.customers.aggregate([{$match:{membership:'Gold'}},{$project:{customerName:1,city:1,totalSpent:1,_id:0}}])
