@@ -1,0 +1,589 @@
+NeedNow Recommendation System Architecture (MVP)
+Goal
+
+Our goal is not to recommend products based only on category.
+
+Instead, we want to recommend products that a user is most likely to interact with or purchase, based on their past behavior.
+
+Example:
+
+User interacts with:
+
+MacBook Air
+AirPods Pro
+Magic Mouse
+
+Instead of recommending random laptops, the system should recommend:
+
+Magic Keyboard
+Mac Mini
+Apple Watch
+USB-C Hub
+
+This recommendation should improve automatically as more users interact with products.
+
+Overall Flow
+User
+   │
+   ▼
+React Frontend
+   │
+   ▼
+Track User Events
+   │
+   ▼
+Backend API
+   │
+   ▼
+PostgreSQL
+   │
+   ▼
+Interaction Matrix
+   │
+   ▼
+Implicit ALS Model
+   │
+   ▼
+Recommended Products
+   │
+   ▼
+Frontend
+Step 1: Product Database
+
+First, we already have products.
+
+Example
+
+Product ID	Name	Category
+1	MacBook Air	Laptop
+2	Magic Mouse	Accessory
+3	AirPods Pro	Audio
+4	Mac Mini	Desktop
+5	Mechanical Keyboard	Accessory
+
+Suppose we have
+
+2000 products
+
+These are stored normally.
+
+The recommendation model DOES NOT need descriptions initially.
+
+It only needs IDs.
+
+Step 2: Collect User Events
+
+Every user interaction is stored.
+
+Example
+
+{
+  "userId": 15,
+  "productId": 101,
+  "event": "view",
+  "timestamp": "2026-07-09T12:30:45Z"
+}
+
+Another
+
+{
+  "userId": 15,
+  "productId": 101,
+  "event": "click"
+}
+
+Another
+
+{
+  "userId": 15,
+  "productId": 101,
+  "event": "add_to_cart"
+}
+
+Another
+
+{
+  "userId": 15,
+  "productId": 101,
+  "event": "purchase"
+}
+
+Every event becomes one database row.
+
+Database Table
+UserEvents
+
+id
+user_id
+product_id
+event_type
+timestamp
+
+Example
+
+User	Product	Event
+15	101	view
+15	101	click
+15	101	cart
+15	250	view
+15	250	click
+22	101	purchase
+45	700	view
+
+Nothing complicated.
+
+Just keep storing events.
+
+Step 3: Convert Events into Scores
+
+The model cannot understand
+
+view
+click
+purchase
+
+It only understands numbers.
+
+So we define weights.
+
+Event	Score
+View	1
+Click	3
+Scroll >70%	2
+Wishlist	8
+Add Cart	10
+Purchase	20
+
+Example
+
+User viewed
+
+MacBook
+
+↓
+
+score = 1
+
+Then clicked
+
+↓
+
++3
+
+Then added cart
+
+↓
+
++10
+
+Total interaction score
+
+14
+
+Another product
+
+Only viewed
+
+↓
+
+score
+
+1
+
+Another
+
+Viewed
+
+Clicked
+
+Purchased
+
+↓
+
+24
+Why use scores?
+
+Because
+
+Purchase
+
+shows much stronger interest than
+
+View
+Step 4: Create User-Product Matrix
+
+Now we summarize all interactions.
+
+Example
+
+User	MacBook	AirPods	Magic Mouse	Keyboard
+1	14	24	0	0
+2	0	0	18	5
+3	20	0	15	0
+
+Rows
+
+↓
+
+Users
+
+Columns
+
+↓
+
+Products
+
+Values
+
+↓
+
+Interaction score
+
+This is the ONLY thing Implicit needs.
+
+How is this matrix built?
+
+Backend runs SQL
+
+Example
+
+SELECT
+user_id,
+product_id,
+SUM(score)
+FROM UserEvents
+GROUP BY user_id, product_id
+
+Result
+
+User 1
+
+MacBook =14
+
+AirPods=24
+
+Keyboard=0
+Step 5: Feed Matrix to Implicit
+
+Python
+
+model.fit(user_item_matrix)
+
+That's literally the training step.
+
+We DO NOT send
+
+2000 products one by one
+
+Instead,
+
+we send
+
+Entire Matrix
+
+Example
+
+500 users
+
+×
+
+2000 products
+
+Matrix size
+
+500 x 2000
+
+The library automatically processes it.
+
+What does Implicit do internally?
+
+This is the important part.
+
+It does NOT compare every product with every other product manually.
+
+Instead it uses
+
+ALS
+
+Alternating Least Squares
+
+ALS learns hidden patterns called latent factors.
+
+Example:
+
+The model never sees:
+
+Gaming
+
+or
+
+Apple
+
+Instead it learns hidden dimensions.
+
+Imagine every product becomes a point in a hidden space.
+
+MacBook
+
+[0.92,
+0.15,
+0.81,
+0.33]
+
+Magic Mouse
+
+[0.90,
+0.18,
+0.79,
+0.35]
+
+AirPods
+
+[0.89,
+0.20,
+0.75,
+0.31]
+
+Notice they're close together.
+
+The model learned that users who interact with one often interact with the others.
+
+No one explicitly told it that they are Apple products.
+
+It discovered that pattern from user behavior.
+
+How does it learn this?
+
+Imagine
+
+100 users.
+
+80 users
+
+buy
+
+MacBook
+
+Later
+
+they also buy
+
+Magic Mouse
+
+The model learns
+
+MacBook
+
+≈
+
+Magic Mouse
+
+because many users interacted with both.
+
+Another example
+
+100 users
+
+buy
+
+Gaming Chair
+
+↓
+
+Later
+
+buy
+
+Mechanical Keyboard
+
+↓
+
+Later
+
+buy
+
+Gaming Mouse
+
+The model learns those products belong to similar shopping behavior.
+
+Does it compare all 2000 products?
+
+No.
+
+That would be extremely slow.
+
+Instead,
+
+ALS compresses everything into a small number of hidden factors.
+
+Example:
+
+Instead of
+
+2000 dimensions
+
+it learns
+
+64 latent dimensions
+
+Every product becomes
+
+64 numbers
+
+Every user also becomes
+
+64 numbers
+
+Now recommendation is just comparing vectors.
+
+How Recommendation Works
+
+Suppose
+
+User vector
+
+[0.82,
+0.17,
+0.64,
+...]
+
+Product vectors
+
+MacBook
+
+[0.80,
+0.18,
+0.66]
+
+Magic Mouse
+
+[0.79,
+0.17,
+0.68]
+
+Rice
+
+[0.02,
+0.90,
+0.11]
+
+Distance
+
+MacBook
+
+↓
+
+Very Close
+
+Magic Mouse
+
+↓
+
+Close
+
+Rice
+
+↓
+
+Very Far
+
+Therefore
+
+recommend
+
+MacBook
+
+Magic Mouse
+
+AirPods
+How does it handle 2000 products?
+
+It doesn't check
+
+2000 × 2000
+
+comparisons every time.
+
+After training,
+
+every product already has its learned vector.
+
+When a user opens the app,
+
+the model simply finds the nearest product vectors to that user's vector.
+
+This is very fast.
+
+Training Schedule
+
+We do NOT retrain every click.
+
+Instead
+
+Collect events all day
+
+↓
+
+Every night
+
+↓
+
+Retrain model
+
+↓
+
+Save new model
+
+or
+
+Every 6 hours
+
+This is how many production systems work.
+
+Recommendation API
+
+Frontend calls
+
+GET /recommendations/15
+
+Python
+
+↓
+
+Implicit
+
+↓
+
+Returns
+
+[
+    {
+        "productId":101,
+        "score":0.98
+    },
+    {
+        "productId":55,
+        "score":0.96
+    },
+    {
+        "productId":210,
+        "score":0.94
+    }
+]
+
+Backend then fetches full product details from the database.
+
+Frontend finally displays:
+
+MacBook Air
+Magic Mouse
+AirPods Pro
+Limitation (Cold Start Problem)
+
+If a brand-new product has never been viewed, clicked, added to cart, or purchased, Implicit has no interaction data for it, so it cannot recommend it effectively.
+
+Similarly, if a new user has no interactions, the model has no basis for personalization. Common solutions are:
+
+Show trending or popular products.
+Ask a few onboarding preference questions.
+Use AI conversation history to bootstrap recommendations.
