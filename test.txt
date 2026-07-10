@@ -1,0 +1,273 @@
+CREATE VIEW v_user_product_scores AS
+SELECT 
+    user_id, 
+    product_id, 
+    SUM(
+        CASE 
+            WHEN event_type = 'view' THEN 1
+            WHEN event_type = 'click' THEN 3
+            WHEN event_type = 'scroll_70' THEN 2
+            WHEN event_type = 'wishlist' THEN 8
+            WHEN event_type = 'cart' THEN 10
+            WHEN event_type = 'purchase' THEN 20
+            ELSE 0 
+        END
+    ) AS interaction_score
+FROM UserEvents
+GROUP BY user_id, product_id;
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+recommender.py
+import implicit
+import numpy as np
+import pandas as pd
+from scipy.sparse import csr_matrix
+
+
+class NeedNowRecommender:
+
+    def __init__(self, factors=64, regularization=0.1, iterations=20):
+        # Initialize the ALS model with your architectural parameters
+        self.model = implicit.als.AlternatingLeastSquares(
+            factors=factors,
+            regularization=regularization,
+            iterations=iterations,
+            random_state=42,
+        )
+        self.user_to_idx = {}
+        self.idx_to_user = {}
+        self.item_to_idx = {}
+        self.idx_to_item = {}
+        self.user_item_matrix = None
+
+    def fit(self, df: pd.DataFrame):
+        """Expects a DataFrame with columns: user_id, product_id,
+
+        interaction_score.
+        """
+        # Create contiguous index mappings for Implicit library
+        self.user_to_idx = {uid: i for i, uid in enumerate(df["user_id"].unique())}
+        self.idx_to_user = {i: uid for uid, i in self.user_to_idx.items()}
+
+        self.item_to_idx = {pid: i for i, pid in enumerate(df["product_id"].unique())}
+        self.idx_to_item = {i: pid for pid, i in self.item_to_idx.items()}
+
+        # Map actual IDs to contiguous index positions
+        mapped_users = df["user_id"].map(self.user_to_idx).values
+        mapped_items = df["product_id"].map(self.item_to_idx).values
+        scores = df["interaction_score"].values.astype(np.float32)
+
+        # Build highly efficient Compressed Sparse Row matrix
+        num_users = len(self.user_to_idx)
+        num_items = len(self.item_to_idx)
+        self.user_item_matrix = csr_matrix(
+            (scores, (mapped_users, mapped_items)), shape=(num_users, num_items)
+        )
+
+        # Train the ALS model on the sparse interaction data
+        self.model.fit(self.user_item_matrix)
+
+    def get_recommendations(self, user_id, n=4):
+        """Generates top N personalized recommendations for a given user."""
+        # Fallback for Cold Start: If user is new, return empty list
+        if user_id not in self.user_to_idx:
+            return []
+
+        user_idx = self.user_to_idx[user_id]
+
+        # Generate recommendations and automatically filter items already interacted with
+        item_indices, scores = self.model.recommend(
+            userid=user_idx,
+            user_items=self.user_item_matrix[user_idx],
+            N=n,
+            filter_already_liked_items=True,
+        )
+
+        # Map internal indices back to original product IDs
+        recommendations = [
+            {"productId": int(self.idx_to_item[idx]), "score": float(score)}
+            for idx, score in zip(item_indices, scores)
+        ]
+        return recommendations
+
+
+
+
+_______________________________________________________________________________________________
+
+
+main.py
+from fastapi import FastAPI, HTTPException
+import pandas as pd
+from recommender import NeedNowRecommender
+
+app = FastAPI(title="NeedNow Recommendation Engine API")
+recommender = NeedNowRecommender()
+
+
+@app.on_event("startup")
+async def load_and_train_model():
+    """Simulates batch loading from Postgres view on startup/cron job."""
+    # In production, replace this with a real SQLAlchemy or asyncpg database query
+    mock_db_data = {
+        "user_id":,
+        "product_id":,
+        "interaction_score":,
+    }
+    df = pd.DataFrame(mock_db_data)
+    recommender.fit(df)
+
+
+@app.get("/recommendations/{user_id}")
+async def get_user_recommendations(user_id: int, limit: int = 4):
+    try:
+        recommendations = recommender.get_recommendations(user_id, n=limit)
+
+        # Cold start handling: If empty, pull fallback popular trending items
+        if not recommendations:
+            return {
+                "user_id": user_id,
+                "strategy": "fallback_popular",
+                "recommendations": [
+                    {"productId": 1, "score": 1.0},
+                    {"productId": 2, "score": 0.9},
+                ],
+            }
+
+        return {
+            "user_id": user_id,
+            "strategy": "personalized_als",
+            "recommendations": recommendations,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+______________________________________________________________________________________
+
+pip install implicit pandas scipy numpy
+
+
+standalone_engine.py
+import numpy as np
+import pandas as pd
+from scipy.sparse import csr_matrix
+import implicit
+
+# Define event weight scoring dictionary
+EVENT_WEIGHTS = {
+    'view': 1,
+    'click': 3,
+    'scroll_70': 2,
+    'wishlist': 8,
+    'add_to_cart': 10,
+    'purchase': 20
+}
+
+class CSVRecommendationEngine:
+    def __init__(self, factors=64, regularization=0.1, iterations=20):
+        self.model = implicit.als.AlternatingLeastSquares(
+            factors=factors, 
+            regularization=regularization, 
+            iterations=iterations,
+            random_state=42
+        )
+        self.user_to_idx = {}
+        self.idx_to_user = {}
+        self.item_to_idx = {}
+        self.idx_to_item = {}
+        self.user_item_matrix = None
+
+    def load_and_process_csv(self, events_csv_path):
+        """Loads events from CSV and aggregates interaction scores."""
+        # 1. Load the raw events
+        df_events = pd.read_csv(events_csv_path)
+        
+        # 2. Map event types to numerical scores
+        df_events['score'] = df_events['event_type'].map(EVENT_WEIGHTS).fillna(1)
+        
+        # 3. Aggregate individual event lines into a single matrix interaction score
+        df_matrix = df_events.groupby(['user_id', 'product_id'])['score'].sum().reset_index()
+        return df_matrix
+
+    def fit(self, df_matrix):
+        """Prepares continuous matrix indexing and trains the Implicit model."""
+        # Create zero-indexed sequential mappings required by Implicit
+        self.user_to_idx = {uid: i for i, uid in enumerate(df_matrix['user_id'].unique())}
+        self.idx_to_user = {i: uid for uid, i in self.user_to_idx.items()}
+        
+        self.item_to_idx = {pid: i for i, pid in enumerate(df_matrix['product_id'].unique())}
+        self.idx_to_item = {i: pid for pid, i in self.item_to_idx.items()}
+        
+        # Map values to internal matrix indexes
+        mapped_users = df_matrix['user_id'].map(self.user_to_idx).values
+        mapped_items = df_matrix['product_id'].map(self.item_to_idx).values
+        scores = df_matrix['score'].values.astype(np.float32)
+        
+        # Construct Compressed Sparse Row (CSR) matrix
+        self.user_item_matrix = csr_matrix(
+            (scores, (mapped_users, mapped_items)), 
+            shape=(len(self.user_to_idx), len(self.item_to_idx))
+        )
+        
+        # Train the model
+        print("Training implicit ALS model on CSV dataset...")
+        self.model.fit(self.user_item_matrix)
+        print("Training complete!\n")
+
+    def recommend_for_user(self, user_id, n=3):
+        """Generates recommendations for an explicit user_id."""
+        if user_id not in self.user_to_idx:
+            print(f"⚠️ User {user_id} not found in matrix. Triggering fallback options.")
+            return []
+            
+        user_idx = self.user_to_idx[user_id]
+        
+        # Generate recommendations and automatically filter items already bought/interacted with
+        item_indices, scores = self.model.recommend(
+            userid=user_idx, 
+            user_items=self.user_item_matrix[user_idx], 
+            N=n,
+            filter_already_liked_items=True
+        )
+        
+        # Map internal array indexes back to the original Product IDs
+        recommendations = []
+        for idx, score in zip(item_indices, scores):
+            recommendations.append({
+                "product_id": int(self.idx_to_item[idx]),
+                "confidence_score": float(score)
+            })
+        return recommendations
+
+# ==========================================
+# TEST EXECUTION RUNNER
+# ==========================================
+if __name__ == "__main__":
+    # Load and map products metadata for rich console output
+    df_products = pd.read_csv('products.csv').set_index('product_id')['name'].to_dict()
+
+    # Initialize Engine
+    engine = CSVRecommendationEngine()
+    
+    # 1. Process matrix data from CSV
+    matrix_data = engine.load_and_process_csv('user_events.csv')
+    
+    # 2. Train model 
+    engine.fit(matrix_data)
+    
+    # 3. Query recommendations for User 15 (Our Apple Ecosystem Fan)
+    target_user = 15
+    recs = engine.recommend_for_user(user_id=target_user, n=3)
+    
+    # Display the results
+    print(f"--- Top Recommendations for User {target_user} ---")
+    if recs:
+        for i, r in enumerate(recs, start=1):
+            prod_name = df_products.get(r['product_id'], "Unknown Item")
+            print(f"{i}. Product ID: {r['product_id']} | Name: {prod_name} (Score: {r['confidence_score']:.4f})")
+    else:
+        print("No recommendations found (Cold start).")
