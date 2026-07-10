@@ -1,0 +1,14 @@
+user_id,product_id,event_type
+15,1,view
+15,1,click
+15,1,add_to_cart
+15,2,view
+15,3,view
+15,3,click
+15,3,add_to_cart
+15,3,purchase
+22,1,purchase
+22,2,purchase
+22,3,click
+33,1,view
+33,7,purchase
